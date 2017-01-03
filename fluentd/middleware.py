@@ -82,21 +82,22 @@ class DjangoRequestLoggingMiddleware(object):
   def process_response(self, request, response):
     started_datetime = request.META.get('timestamp_started', datetime.utcnow())
 
-    request_headers = [{'name': re.sub('^HTTP_', '', header), 'value': value} for (header, value) in request.META.items() if header.startswith('HTTP_')]
+    request_headers = {re.sub('^HTTP_', '', header): value for (header, value) in request.META.items() if header.startswith('HTTP_')}
     request_headers_size = self.request_header_size(request)
     request_query_string = [{'name': name, 'value': (value[0] if len(value) > 0 else None)} for name, value in parse_qs(request.META.get('QUERY_STRING', '')).items()]
 
     r = request.META.get('request')
     request_content_size = r.content_length or 0
 
-    response_headers = [{'name': header, 'value': value[-1]} for (header, value) in response._headers.items()]
+    response_headers = response._headers
+
     response_headers_size = self.response_header_size(response)
     response_content_size = len(response.content)
 
     payload = {
+      'fluentd_env': self.fluentd_env,
       'time_started': started_datetime.isoformat() + 'Z',
       'server_ip': socket.gethostbyname(socket.gethostname()),
-      'fluentd_env': self.fluentd_env,
       'x_client_address': self.client_address(request),
       'time': int(round((datetime.utcnow() - started_datetime).total_seconds() * 1000)),
       'request': {
@@ -127,6 +128,7 @@ class DjangoRequestLoggingMiddleware(object):
       },
     }
 
+    # TODO: make that call asynchronous for Christ's sake
     r = requests.post(self.fluentd_url, data={'json': json.dumps(payload)})
 
     return response
