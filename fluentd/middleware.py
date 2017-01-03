@@ -96,7 +96,7 @@ class DjangoRequestLoggingMiddleware(object):
       'server_ip': socket.gethostbyname(socket.gethostname()),
       'fluentd_env': self.fluentd_env,
       'x_client_address': self.client_address(request),
-      'time': int(round((datetime.utcnow() - started_date_time).total_seconds() * 1000)),
+      'time': int(round((datetime.utcnow() - started_datetime).total_seconds() * 1000)),
       'request': {
         'method': request.method,
         'url': request.build_absolute_uri(),
