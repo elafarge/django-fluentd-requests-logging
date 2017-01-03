@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='fluentd-requests-logging',
-    version='0.1.0',
+    version='0.1.1',
     description='A little JSON-over-HTTP export for fluentd',
     author="Etienne Lafarge",
     author_email="etienne@rythm.co",
@@ -12,7 +12,9 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     install_requires=[
-
+        'requests==2.9.1',
+        'six==1.10.0',
+        'Werkzeug==0.11.9',
     ],
     include_package_data=True,
     classifiers=[
