@@ -31,6 +31,7 @@ import socket
 from datetime import datetime
 
 # 3p
+import requests
 from django.conf import settings
 from werkzeug.wrappers import Request
 from six.moves.urllib.parse import parse_qs
