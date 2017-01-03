@@ -19,6 +19,7 @@ Have fun querying your logs !
 TODO: add logging to a module specific logger (that the Django user willing to
 know when his fluentd endpoints are flaky should redirect to console output or
 other log pipelines where fluentd isn't involved).
+TODO: add goddamn unit tests !
 
 """
 
@@ -35,7 +36,7 @@ from werkzeug.wrappers import Request
 from six.moves.urllib.parse import parse_qs
 
 
-class DjangoMiddleware(object):
+class DjangoRequestLoggingMiddleware(object):
 
   def __init__(self):
     self.fluentd_env = getattr(settings, 'FLUENTD_ENV', None)
