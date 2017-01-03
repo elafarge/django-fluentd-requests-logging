@@ -43,7 +43,7 @@ class DjangoRequestLoggingMiddleware(object):
     self.fluentd_host = getattr(settings, 'FLUENTD_HOST', 'localhost')
     self.fluentd_port = getattr(settings, 'FLUENTD_PORT', '24224')
     self.fluentd_tag = getattr(settings, 'FLUENTD_TAG', 'django.requests')
-    self.fluentd_url = "http://%{0}:%{1}/django.requests".format(
+    self.fluentd_url = "http://%{0}:%{1}/{2}".format(
         self.fluentd_host, self.fluentd_port, self.fluentd_tag
     )
 
@@ -124,8 +124,8 @@ class DjangoRequestLoggingMiddleware(object):
         'body_size': response_headers_size + response_content_size,
         'redirect_url': response._headers.get('location', ('location', ''))[-1]
       },
-    })
+    }
 
-    r = requests.post()
+    r = requests.post(self.fluentd_url, data=payload)
 
     return response
