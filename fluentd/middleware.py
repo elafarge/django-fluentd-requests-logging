@@ -44,7 +44,7 @@ class DjangoRequestLoggingMiddleware(object):
     self.fluentd_host = getattr(settings, 'FLUENTD_HOST', 'localhost')
     self.fluentd_port = getattr(settings, 'FLUENTD_PORT', '24224')
     self.fluentd_tag = getattr(settings, 'FLUENTD_TAG', 'django.requests')
-    self.fluentd_url = "http://%{0}:%{1}/{2}".format(
+    self.fluentd_url = "http://{0}:{1}/{2}".format(
         self.fluentd_host, self.fluentd_port, self.fluentd_tag
     )
 
