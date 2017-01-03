@@ -82,7 +82,7 @@ class DjangoRequestLoggingMiddleware(object):
   def process_response(self, request, response):
     started_datetime = request.META.get('timestamp_started', datetime.utcnow())
 
-    request_headers = {re.sub('^HTTP_', '', header): value for (header, value) in request.META.items() if header.startswith('HTTP_')}
+    request_headers = {re.sub('^HTTP_', '', header): value.lower() for (header, value) in request.META.items() if header.startswith('HTTP_')}
     request_headers_size = self.request_header_size(request)
     request_query_string = [{'name': name, 'value': (value[0] if len(value) > 0 else None)} for name, value in parse_qs(request.META.get('QUERY_STRING', '')).items()]
 
