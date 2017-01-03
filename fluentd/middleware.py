@@ -27,6 +27,7 @@ from __future__ import unicode_literals
 
 # stl
 import re
+import json
 import socket
 from datetime import datetime
 
@@ -93,7 +94,6 @@ class DjangoRequestLoggingMiddleware(object):
     response_content_size = len(response.content)
 
     payload = {
-      'json': True, # FLuentd gets lost if this field isn't present...
       'time_started': started_datetime.isoformat() + 'Z',
       'server_ip': socket.gethostbyname(socket.gethostname()),
       'fluentd_env': self.fluentd_env,
@@ -127,6 +127,6 @@ class DjangoRequestLoggingMiddleware(object):
       },
     }
 
-    r = requests.post(self.fluentd_url, data=payload)
+    r = requests.post(self.fluentd_url, data={'json': json.dumps(payload)})
 
     return response
