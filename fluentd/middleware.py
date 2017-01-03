@@ -81,7 +81,7 @@ class DjangoRequestLoggingMiddleware(object):
     started_datetime = request.META.get('timestamp_started', datetime.utcnow())
 
     request_headers = [{'name': re.sub('^HTTP_', '', header), 'value': value} for (header, value) in request.META.items() if header.startswith('HTTP_')]
-    request_header_size = self.request_header_size(request)
+    request_headers_size = self.request_header_size(request)
     request_query_string = [{'name': name, 'value': (value[0] if len(value) > 0 else None)} for name, value in parse_qs(request.META.get('QUERY_STRING', '')).items()]
 
     r = request.META.get('request')
@@ -93,7 +93,6 @@ class DjangoRequestLoggingMiddleware(object):
 
     payload = {
       'time_started': started_datetime.isoformat() + 'Z',
-      'latency': int(round((datetime.utcnow() - started_date_time).total_seconds() * 1000)),
       'server_ip': socket.gethostbyname(socket.gethostname()),
       'fluentd_env': self.fluentd_env,
       'x_client_address': self.client_address(request),
