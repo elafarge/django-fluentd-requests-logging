@@ -28,9 +28,6 @@ the same settings format as Django Rest Framework does.
 Have fun querying your logs !
 
 TODO: catch exceptions in the payload too
-TODO: optionnally log bodies (as JSON if they are of JSON type) of both requests
-      and responses, either on error-ish status codes (>= 400) or all the time,
-      with a limit on the body size as well maybe
 """
 
 from __future__ import unicode_literals
@@ -52,6 +49,10 @@ from werkzeug.wrappers import Request
 from six.moves.urllib.parse import parse_qs
 
 
+# Constants + logging handle
+LOG_ALL_BODIES = 2
+LOG_BODIES_ON_ERRORS = 1
+LOG_NO_BODY = 0
 LOG = logging.getLogger('django_requests_fluentd_forwarder_middleware')
 
 
@@ -123,6 +124,8 @@ class DjangoRequestLoggingMiddleware(object):
         conf = settings.FLUENTD_REQUEST_FORWARDER
 
         self.fluentd_env = conf.get('ENV', None)
+        self.body_log_policy = conf.get('BODY_LOG_POLICY', LOG_NO_BODY)
+        self.max_body_log_size = conf.get('MAX_BODY_LOG_SIZE', 1000)
 
         host = conf.get('HOST', 'localhost')
         port = conf.get('PORT', '24224')
@@ -131,6 +134,8 @@ class DjangoRequestLoggingMiddleware(object):
         self.ignore_map = {path: (method.lower(), expected_status)
                            for (method, path, expected_status)
                            in conf.get('IGNORE_REQUESTS', [])}
+
+        self.fields_to_obfuscate = conf.get('FIELDS_TO_OBFUSCATE', [])
 
         self._push_queue = PushQueue(
             "http://{0}:{1}/{2}".format(host, port, tag),
@@ -143,6 +148,10 @@ class DjangoRequestLoggingMiddleware(object):
         """ Called when a request is initiated """
         request.META['timestamp_started'] = datetime.utcnow()
         request.META['request'] = Request(request.META)
+
+        # Should we log the baby
+        if self.body_log_policy in [LOG_ALL_BODIES, LOG_BODIES_ON_ERRORS]:
+            request.META['body'] = request.body
 
     def request_header_size(self, request):
         """ Computes the size of request headers """
@@ -184,6 +193,18 @@ class DjangoRequestLoggingMiddleware(object):
 
         return first_line + header_fields
 
+    def build_body_log(self, body_text):
+        """
+        Builds the body log (truncates it if it exceeds max_body_log_size,
+        returns a dict if the body is JSON-readable...)
+        """
+        if len(body_text) > self.max_body_log_size:
+            body_log = body_text[:self.max_body_log_size]
+        else:
+            body_log = body_text
+
+        return body_log
+
     def process_response(self, request, response):
         """ Called before the response is sent to the client """
         # (METHOD, PATH, HTTP STATUS CODE) is to be ignored ? Bye !
@@ -216,7 +237,9 @@ class DjangoRequestLoggingMiddleware(object):
         req = request.META.get('request')
         request_content_size = req.content_length or 0
 
-        response_headers = response._headers
+        response_headers = {name: values[1:]
+                            for (name, values)
+                            in response._headers.items()}
 
         response_headers_size = self.response_header_size(response)
         response_content_size = len(response.content)
@@ -260,6 +283,26 @@ class DjangoRequestLoggingMiddleware(object):
                 )[-1]
             },
         }
+
+        # Log bodies as well if required
+        if self.body_log_policy == LOG_ALL_BODIES \
+                or self.body_log_policy == LOG_BODIES_ON_ERRORS \
+                and response.status_code >= 400:
+            payload['request']['body'] = \
+                self.build_body_log(request.META.get('body', b'').decode())
+            payload['response']['content']['value'] = \
+                self.build_body_log(response.content.decode())
+
+        # Obfuscate sensitive fields on the app owner's behalf
+        def recobfs(tree, obfuscated_path):
+            key = obfuscated_path.split('.')
+            if len(key) > 1:
+                recobfs(tree[key[0]], '.'.join(key[1::]))
+            else:
+                tree[key[0]] = "OBFUSCATED!"
+
+        for sensifield in self.fields_to_obfuscate:
+            recobfs(payload, sensifield)
 
         self._push_queue.append_payload(payload)
 
