@@ -187,7 +187,7 @@ class DjangoRequestLoggingMiddleware(object):
                                             datetime.utcnow())
 
         # <3 dict comprehensions :)
-        request_headers = {re.sub('^HTTP_', '', header): value.lower()
+        request_headers = {re.sub('^HTTP_', '', header).lower(): value
                            for (header, value)
                            in request.META.items()
                            if header.startswith('HTTP_')}
