@@ -21,17 +21,16 @@ the same settings format as Django Rest Framework does.
  * DROP_SIZE: when there are more logs that DROP_SIZE in the push queue, older
               logs will be flushed
  * RETRY_INTERVAL: time to wait before trying again a failed request
+ * IGNORE_REQUESTS: (Python) list of (method, path, response_code) tuples for
+                    which not to forward requests (useful for health checks for
+                    instance)
 
 Have fun querying your logs !
 
-TODO: add logging to a module specific logger (that the Django user willing to
-know when his fluentd endpoints are flaky should redirect to console output or
-other log pipelines where fluentd isn't involved).
 TODO: catch exceptions in the payload too
 TODO: optionnally log bodies (as JSON if they are of JSON type) of both requests
       and responses, either on error-ish status codes (>= 400) or all the time,
       with a limit on the body size as well maybe
-
 """
 
 from __future__ import unicode_literals
@@ -129,6 +128,10 @@ class DjangoRequestLoggingMiddleware(object):
         port = conf.get('PORT', '24224')
         tag = conf.get('TAG', 'django.requests')
 
+        self.ignore_map = {path: (method.lower(), expected_status)
+                           for (method, path, expected_status)
+                           in conf.get('IGNORE_REQUESTS', [])}
+
         self._push_queue = PushQueue(
             "http://{0}:{1}/{2}".format(host, port, tag),
             int(conf.get('DROP_SIZE', '10000')),
@@ -183,6 +186,14 @@ class DjangoRequestLoggingMiddleware(object):
 
     def process_response(self, request, response):
         """ Called before the response is sent to the client """
+        # (METHOD, PATH, HTTP STATUS CODE) is to be ignored ? Bye !
+        req_path = request.get_full_path()
+        if req_path in self.ignore_map:
+            (verb, code) = self.ignore_map[req_path]
+
+            if request.method.lower() == verb and response.status_code == code:
+                return response
+
         started_datetime = request.META.get('timestamp_started',
                                             datetime.utcnow())
 
@@ -220,7 +231,7 @@ class DjangoRequestLoggingMiddleware(object):
                       1000)),
             'request': {
                 'method': request.method,
-                'url': request.build_absolute_uri(),
+                'path': request.get_full_path(),
                 'http_version': 'HTTP/1.1',
                 'query_string': request_query_string,
                 'headers': request_headers,
