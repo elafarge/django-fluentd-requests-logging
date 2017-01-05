@@ -1,4 +1,4 @@
-Django Request Logger for FLuentD-HTTP
+Django Request Logger for FluentD-HTTP
 ======================================
 
 Logs Django requests and response metadata as well as the request and response
@@ -31,3 +31,11 @@ in Django accordingly (that simply goes in your traditionnal Django
                         be replaced with "OBFUSCATED" before anything is
                         forwarded to fluentd.
 ```
+
+License
+-------
+MIT
+
+Maintainers
+-----------
+ * Etienne Lafarge <etienne@rythm.co>
