@@ -2,8 +2,7 @@ Django Request Logger for FLuentD-HTTP
 ======================================
 
 Logs Django requests and response metadata as well as the request and response
-bodies in case an error (4xx or 5xx) is triggered and the exception thrown by
-Django if exception there is.
+bodies optionally.
 
 Theses logs are formatted as JSON for a better compliance with modern document
 indexing and processing solutions (who said Elasticseach ?).
@@ -13,9 +12,22 @@ in Django accordingly (that simply goes in your traditionnal Django
 `settings.py` file):
 
 ```shell
- * FLUENTD_HOST: fluentd server hostname (default: localhost)
- * FLUENTD_PORT: fluentd http server port (default: 24224)
- * FLUENTD_ENV : adds an "environment" tag to log document (default: None)
- * FLUENTD_TAG : tag identyfing the source in fluentd pipelines (default
-                 django.requests)
+ * HOST: fluentd server hostname (default: localhost)
+ * PORT: fluentd http server port (default: 24224)
+ * ENV : adds a "fluentd_environment" tag to log document (default: None)
+ * TAG : tag identifying the source in fluentd pipelines (default
+         django.requests)
+ * FLUSH_PERIOD: the interval between two flushes of the fluentd push queue
+                 (allows for CPU consumption shaping)
+ * DROP_SIZE: when there are more logs that DROP_SIZE in the push queue, older
+              logs will be flushed
+ * RETRY_INTERVAL: time to wait before trying again a failed request
+ * IGNORE_REQUESTS: (Python) list of (method, path, response_code) tuples for
+                    which not to forward requests (useful for health checks for
+                    instance)
+ * FIELDS_TO_OBFUSCATE: a Python list of fields (such as
+                        "requests.headers.authorization" to obfuscate. Passwords
+                        and API keys mostly ;-) The value of these fields will
+                        be replaced with "OBFUSCATED" before anything is
+                        forwarded to fluentd.
 ```

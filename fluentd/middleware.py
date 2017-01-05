@@ -24,10 +24,13 @@ the same settings format as Django Rest Framework does.
  * IGNORE_REQUESTS: (Python) list of (method, path, response_code) tuples for
                     which not to forward requests (useful for health checks for
                     instance)
+ * FIELDS_TO_OBFUSCATE: a Python list of fields (such as
+                        "requests.headers.authorization" to obfuscate. Passwords
+                        and API keys mostly ;-) The value of these fields will
+                        be replaced with "OBFUSCATED" before anything is
+                        forwarded to fluentd.
 
 Have fun querying your logs !
-
-TODO: catch exceptions in the payload too
 """
 
 from __future__ import unicode_literals
@@ -39,6 +42,7 @@ import time
 import socket
 import logging
 import threading
+import traceback
 from collections import deque
 from datetime import datetime
 
@@ -152,6 +156,12 @@ class DjangoRequestLoggingMiddleware(object):
         # Should we log the baby
         if self.body_log_policy in [LOG_ALL_BODIES, LOG_BODIES_ON_ERRORS]:
             request.META['body'] = request.body
+
+    def process_exception(self, request, exception):
+        """ Called when an exception occurs in the view """
+        request.META['exception'] = traceback.format_exception(
+            type(exception), exception, exception.__traceback__
+        )
 
     def request_header_size(self, request):
         """ Computes the size of request headers """
