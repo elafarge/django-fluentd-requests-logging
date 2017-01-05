@@ -1,15 +1,15 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name='django-fluentd-requests-logging',
-    version='0.4.3',
+    version='0.4.4',
     description='A little JSON-over-HTTP Django request log export for fluentd',
     author="Etienne Lafarge",
     author_email="etienne@rythm.co",
     url="https://github.com/elafarge/django-fluentd-requests-logging",
     # TODO: download URL
     licence='MIT',
-    packages=find_packages(),
+    packages=['fluentd'],
     zip_safe=False,
     install_requires=[
         'requests==2.9.1',
