@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-fluentd-requests-logging',
-    version='0.4.0',
+    version='0.4.3',
     description='A little JSON-over-HTTP Django request log export for fluentd',
     author="Etienne Lafarge",
     author_email="etienne@rythm.co",
@@ -28,9 +28,8 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Utilities',
-        'Topic :: Django',
-        'Topic :: Middleware',
-        'Topic :: Logging',
-        'Topic :: Fluentd',
+        'Framework :: Django',
+        'Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware',
+        'Topic :: System :: Logging',
   ],
 )
