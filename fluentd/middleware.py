@@ -299,9 +299,10 @@ class DjangoRequestLoggingMiddleware(object):
                 or self.body_log_policy == LOG_BODIES_ON_ERRORS \
                 and response.status_code >= 400:
             payload['request']['body'] = \
-                self.build_body_log(request.META.get('body', b'').decode())
+                self.build_body_log(request.META.get('body', b'')
+                                    .decode('utf-8'))
             payload['response']['content']['value'] = \
-                self.build_body_log(response.content.decode())
+                self.build_body_log(response.content.decode('utf-8'))
 
         # Obfuscate sensitive fields on the app owner's behalf
         def recobfs(tree, obfuscated_path):
