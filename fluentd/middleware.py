@@ -245,7 +245,7 @@ class DjangoRequestLoggingMiddleware(object):
             in parse_qs(request.META.get('QUERY_STRING', '')).items()]
 
         req = request.META.get('request')
-        request_content_size = req.content_length or 0
+        request_content_size = req.content_length or 0 if req else 0
 
         response_headers = {name: values[1:]
                             for (name, values)
