@@ -51,6 +51,7 @@ import requests
 from django.conf import settings
 from werkzeug.wrappers import Request
 from six.moves.urllib.parse import parse_qs
+from django.utils.deprecation import MiddlewareMixin
 
 
 # Constants + logging handle
@@ -119,7 +120,7 @@ class PushQueue(threading.Thread):
             time.sleep(max(0, self.flush_period - (time.time() - flush_start)))
 
 
-class DjangoRequestLoggingMiddleware(object):
+class DjangoRequestLoggingMiddleware(MiddlewareMixin):
     """
     A Django middleware that logs all requests to a fluentd HTTP endpoint.
     """
