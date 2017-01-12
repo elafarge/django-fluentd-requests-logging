@@ -37,6 +37,7 @@ from __future__ import unicode_literals
 
 # stl
 import re
+import sys
 import json
 import time
 import socket
@@ -48,10 +49,19 @@ from datetime import datetime
 
 # 3p
 import requests
-from django.conf import settings
 from werkzeug.wrappers import Request
 from six.moves.urllib.parse import parse_qs
-from django.utils.deprecation import MiddlewareMixin
+from django.conf import settings
+try:
+    from django.utils.deprecation import MiddlewareMixin
+except ImportError:
+    class MiddlewareMixin(object):
+        """
+        Blank class for older versions of Django where MiddlewareMixin
+        doesn't exist
+        """
+        def __init__(self, get_response):
+            pass
 
 
 # Constants + logging handle
@@ -87,6 +97,7 @@ class PushQueue(threading.Thread):
         self.retry_interval = retry_interval
 
         self._payloads = deque(maxlen=drop_size)
+        self.setDaemon(True)
 
         self.start()
 
@@ -124,8 +135,9 @@ class DjangoRequestLoggingMiddleware(MiddlewareMixin):
     """
     A Django middleware that logs all requests to a fluentd HTTP endpoint.
     """
-    def __init__(self):
+    def __init__(self, get_response=None):
         """ Builds the middleware, inits the push queue """
+        MiddlewareMixin.__init__(self, get_response)
         conf = settings.FLUENTD_REQUEST_FORWARDER
 
         self.fluentd_env = conf.get('ENV', None)
@@ -160,8 +172,9 @@ class DjangoRequestLoggingMiddleware(MiddlewareMixin):
 
     def process_exception(self, request, exception):
         """ Called when an exception occurs in the view """
+        exc_type, exc_value, exc_traceback = sys.exc_info()
         request.META['exception'] = traceback.format_exception(
-            type(exception), exception, exception.__traceback__
+            exc_type, exc_value, exc_traceback
         )
 
     def request_header_size(self, request):
