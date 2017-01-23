@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='django-fluentd-requests-logging',
-    version='0.5.0',
+    version='0.5.1',
     description='A little JSON-over-HTTP Django request log export for fluentd',
     author="Etienne Lafarge",
     author_email="etienne@rythm.co",
