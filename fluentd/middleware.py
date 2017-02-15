@@ -40,6 +40,7 @@ import re
 import sys
 import json
 import time
+import base64
 import socket
 import logging
 import threading
@@ -217,6 +218,16 @@ class DjangoRequestLoggingMiddleware(MiddlewareMixin):
 
         return first_line + header_fields
 
+    def obfuscate_basicauth_password(self, headers):
+        if "authorization" in headers and \
+                headers["authorization"].startswith("Basic "):
+            auth_string = headers["authorization"].replace("Basic ", "")
+            authlist = base64.b64decode(auth_string).split(":", 1)
+            headers["authorization"] = authlist[0] + ":" + \
+                                       "*" * len(authlist[1])
+
+        return headers
+
     def build_body_log(self, body_text):
         """
         Builds the body log (truncates it if it exceeds max_body_log_size,
@@ -249,6 +260,8 @@ class DjangoRequestLoggingMiddleware(MiddlewareMixin):
                            if header.startswith('HTTP_')}
 
         request_headers_size = self.request_header_size(request)
+
+        request_headers = self.obfuscate_basicauth_password(request_headers)
 
         request_query_string = [
             {
@@ -314,11 +327,19 @@ class DjangoRequestLoggingMiddleware(MiddlewareMixin):
         if self.body_log_policy == LOG_ALL_BODIES \
                 or self.body_log_policy == LOG_BODIES_ON_ERRORS \
                 and response.status_code >= 400:
-            payload['request']['body'] = \
-                self.build_body_log(request.META.get('body', b'')
-                                    .decode('utf-8'))
-            payload['response']['content']['value'] = \
-                self.build_body_log(response.content.decode('utf-8'))
+            try:
+                payload['request']['body'] = \
+                    self.build_body_log(request.META.get('body')
+                                        .decode('utf-8'))
+            except UnicodeDecodeError:
+                payload['request']['body'] = "Error decoding body to utf-8"
+
+            try:
+                payload['response']['content']['value'] = \
+                    self.build_body_log(response.content.decode('utf-8'))
+            except UnicodeDecodeError:
+                payload['response']['content']['value'] = "Error decoding " \
+                    "body to utf-8"
 
         # Obfuscate sensitive fields on the app owner's behalf
         def recobfs(tree, obfuscated_path):
