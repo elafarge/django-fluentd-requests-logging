@@ -222,10 +222,13 @@ class DjangoRequestLoggingMiddleware(MiddlewareMixin):
         if "authorization" in headers and \
                 headers["authorization"].startswith("Basic "):
             auth_string = headers["authorization"].replace("Basic ", "")
-            authlist = base64.b64decode(auth_string.decode("utf-8")) \
-                             .split(":", 1)
-            headers["authorization"] = authlist[0] + ":" + \
-                                       "*" * len(authlist[1])
+            try:
+                authlist = base64.b64decode(auth_string.decode("utf-8")) \
+                                 .split(":", 1)
+                headers["authorization"] = authlist[0] + ":" + \
+                                           "*" * len(authlist[1])
+            except UnicodeDecodeError:
+                pass
 
         return headers
 
