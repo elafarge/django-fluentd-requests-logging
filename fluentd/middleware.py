@@ -333,7 +333,7 @@ class DjangoRequestLoggingMiddleware(MiddlewareMixin):
                 and response.status_code >= 400:
             try:
                 payload['request']['body'] = \
-                    self.build_body_log(request.META.get('body')
+                    self.build_body_log(request.META.get('body', u"")
                                         .decode('utf-8'))
             except UnicodeDecodeError:
                 payload['request']['body'] = "Error decoding body to utf-8"
