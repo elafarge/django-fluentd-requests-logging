@@ -1,6 +1,14 @@
 Django Request Logger for FluentD-HTTP
 ======================================
 
+DEPRECATION NOTICE
+------------------
+
+**This project won't be maintained anymore**, you can consider alternatives such
+as [django-logging-json](https://github.com/cipriantarta/django-logging). Which
+is much better anyways. I won't be writing a single line of code for Django
+anymore :)
+
 Logs Django requests and response metadata as well as the request and response
 bodies optionally.
 
