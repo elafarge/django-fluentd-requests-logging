@@ -14,7 +14,7 @@ setup(
     install_requires=[
         'requests==2.9.1',
         'six==1.10.0',
-        'Werkzeug==0.11.9',
+        'Werkzeug==0.15.3',
     ],
     include_package_data=True,
     classifiers=[
